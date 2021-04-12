@@ -1,0 +1,219 @@
+---
+title: "Tidy Data"
+subtitle: "R for Data Science"  
+author: 
+  - "Meenakshi Kushwaha"
+  
+date: '`r Sys.Date()`'
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#233d4d",
+  secondary_color = "#2D080A"
+)
+```
+# Key Topics
+- Pivoting
+- Separting and Uniting
+- Handling missing values
+
+--
+![](tidy-1.png)
+
+
+---
+# Tidy Data - Example
+```{r, message=FALSE}
+library(tidyverse)
+table1
+```
+
+---
+class: inverse, center, middle
+# Pivoting
+-- -
+
+## Changing shape of the data
+
+---
+# Problem 1
+When column names are not names of variables but *values* of a variable
+
+```{r}
+table4a
+```
+
+We use `pivot_longer()` to fix this
+---
+# Using `pivot_longer()`
+- The set of columns whose names are values, not variables
+- The name of the variable to move the column names to
+- The name of the variable to move the column values to
+
+```{r}
+table4b %>% 
+  pivot_longer(c(`1999`, `2000`), names_to = "year", values_to = "population")
+```
+
+---
+# Problem 2
+When one observation is scatterred across multiple rows
+
+```{r}
+table2
+```
+
+We use  `pivot_wider()`
+
+---
+# Using `pivot_wider()`
+We need
+- The column to take variable names from. 
+- The column to take values from. 
+```{r}
+table2 %>%
+    pivot_wider(names_from = type, values_from = count)
+```
+
+NOTE:
+Differnce in use of `""` in pivot_longer vs pivot_wider
+---
+class: middle, inverse, center
+#Separating 
+--- -
+## and Uniting
+
+---
+# Problem 3
+When one columns contains two variables
+
+```{r}
+table3
+```
+
+We can use `separate()` here
+
+---
+# Using `seperate()`
+We need
+- Column to be seperated
+- Names of columns to seperate into
+```{r}
+table3 %>% 
+  separate(rate, into = c("cases", "population"))
+```
+
+---
+# Using `seperate()`
+
+Notice the default behaviours
+- `seperate` will split when it encounters a non-alphanumeric character
+  - To specify where the split should happen use `sep = `
+- `seperate` will also make the new columns into character columns
+  - Use `convert = TRUE` to better convert the new columns
+--
+
+```{r}
+table3 %>% 
+  separate(rate, into = c("cases", "population"), sep = "/", convert = TRUE)
+```
+
+---
+class: inverse, center, middle
+# Missing Data
+-- -
+
+---
+# Problem 4
+Making implicit missing values explicit in the form of NA
+- using `pivot_wider()`
+```{r}
+stocks <- tibble(
+  year   = c(2015, 2015, 2015, 2015, 2016, 2016, 2016),
+  qtr    = c(   1,    2,    3,    4,    2,    3,    4),
+  return = c(1.88, 0.59, 0.35,   NA, 0.92, 0.17, 2.66)
+)
+stocks %>% 
+  pivot_wider(names_from = year, values_from = return)
+```
+---
+# Problem 4
+Making implicit missing values explicit in the form of NA
+- using `complete()`
+
+```{r}
+stocks %>% 
+  complete(year, qtr)
+```
+
+---
+# Problem 5
+Making explicit missing values implicit
+- Use `values_drop_na = TRUE` in `pivot_longer()`
+
+```{r}
+stocks %>% 
+  pivot_wider(names_from = year, values_from = return) %>% 
+  pivot_longer(
+    cols = c(`2015`, `2016`), 
+    names_to = "year", 
+    values_to = "return", 
+    values_drop_na = TRUE
+  )
+```
+
+---
+# Problem 6
+Imputing missing values
+  - use `fill()` 
+  - this is the "last observation carried forward approach"
+```{r}
+treatment <- tribble(
+  ~ person,           ~ treatment, ~response,
+  "Derrick Whitmore", 1,           7,
+  NA,                 2,           10,
+  NA,                 3,           9,
+  "Katherine Burke",  1,           4
+)
+treatment %>% fill(person)
+
+```
+  
+---
+# Summary
+
+1. Column names are not names of variables
+  - `pivot_longer()`
+2. One observation scatterred across multiple rows
+  - `pivot_wider()`
+3. One column contains two variables
+  - `seperate()`
+  - Can specify seperation point and  `convert = TRUE`
+4. Making implicit missing values explicit (Show the NAs)
+  - `pivot_wider()`
+  - `complete()`
+5. Making explicit missing values implicit
+  - `values_drop_na = TRUE` in pivot_longer()
+6. Imputing missing values
+  - `fill()`
+  
+  
+
+
+  
+  
+
